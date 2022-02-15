@@ -39,7 +39,7 @@
 #define XLOW_ADC 0
 #define XUP_ADC 100
 
-#define NBINS_QDC 250
+#define NBINS_QDC 50
 #define XLOW_QDC 0
 #define XUP_QDC 3000
 
@@ -94,6 +94,8 @@ void format_h_1D(TH1 * h)
 // 	gStyle->SetTitleFontSize(0.1);
 }
 
+
+
 TString ConstructPdfName(TString pathname){
 
   TString out = pathname(0,26);
@@ -122,6 +124,38 @@ TString ConstructPdfName(TString pathname){
   return out;
 }
 
+
+TString ConstructFileNameOnly(TString pathname){
+
+  TString out = pathname(26,43);
+//   out.Append("pdf/");
+//   TObjArray* Strings = pathname.Tokenize("/");
+//   TIter iString(Strings);
+//   TObjString* os = 0;
+//   TString tmp = "";
+//   
+//   
+//   while((os=(TObjString*)iString()))
+//   {
+//     tmp = os->GetString();
+//     if((tmp.Contains("2021") || tmp.Contains("2022") ) && tmp.Contains("_"))
+//       out.Append(tmp);
+//     else if(tmp.Contains(".root"))
+//     {
+//       out.Append("_");
+//       out.Append(tmp);
+//     }
+//   }
+//   
+//   out.ReplaceAll(".root",".pdf");
+//   delete Strings;
+  
+  return out;
+}
+
+
+
+
 int rawDisplayCrossedFibers(TString path)
 {
     
@@ -132,6 +166,7 @@ int rawDisplayCrossedFibers(TString path)
     }
     
     gStyle->SetPalette(kBird);
+//     gStyle->SetOptStat(0);
 	SLoop * loop = new SLoop();
 	loop->addFile(std::string(path));
 	loop->setInput({});
@@ -156,41 +191,48 @@ int rawDisplayCrossedFibers(TString path)
 	TH1D * hFiberMult = new TH1D("hFiberMult", "hFiberMult", N_FIBERS+1, -0.5, N_FIBERS+0.5); 
 //     TH2D * hFiberHits = new TH2D("hFiberHits", "hFiberHits", N_FIBERS, -0.5, N_FIBERS-0.5, N_FIBERS, -0.5, N_FIBERS-0.5);
     TH2D * hSiPMMapping = new TH2D("hSiPMMapping", "hSiPMMapping", N_READ_OUT_SIPMS, -0.5, N_READ_OUT_SIPMS-0.5, N_READ_OUT_SIPMS, -0.5, N_READ_OUT_SIPMS-0.5);
-    TH1D * hTeventTcontolL[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER]; //change name to TcontrolTevent_diff or similar
-    TH1D * hTeventTcontolR[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER]; // -||-
-    TH1D * hQeventQcontolL[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
-    TH1D * hQeventQcontolR[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
-    TH1D * hOnlyQcontolL[N_FIBERS_IN_CONTROL_LAYER];
-    TH1D * hOnlyQcontolR[N_FIBERS_IN_CONTROL_LAYER];
+    TH1D * hTeventTcontrolL[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER]; //change name to TcontrolTevent_diff or similar
+    TH1D * hTeventTcontrolR[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER]; // -||-
+    TH1D * hQeventQcontrolL[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
+    TH1D * hQeventQcontrolR[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
+    TH2D * h2QeventQcontrolL[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
+    TH2D * h2QeventQcontrolR[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
+    TH1D * hOnlyQcontrolL[N_FIBERS_IN_CONTROL_LAYER];
+    TH1D * hOnlyQcontrolR[N_FIBERS_IN_CONTROL_LAYER];
     TH1D * hQDCHighDepL[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
     TH1D * hQDCHighDepR[N_FIBERS_IN_EVENT_LAYER][N_FIBERS_IN_CONTROL_LAYER];
     Int_t aSiPMHit[N_READ_OUT_SIPMS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     std::vector<Double_t> vTimeL[N_CROSSED_FIBERS],vTimeR[N_CROSSED_FIBERS];
     std::vector<Double_t> vQDCL[N_CROSSED_FIBERS],vQDCR[N_CROSSED_FIBERS];
 	std::vector<Double_t> vQDCHighDepL,vQDCHighDepR, vFibNHighDepL, vFibNHighDepR;
-    auto hProfL  = new TProfile("hProfL","",100,4,7,0,3000); //nbins,xlow,xup,ylow,yup
-	auto hProfR  = new TProfile("hProfR","",100,4,7,0,3000); //nbins,xlow,xup,ylow,yup
-
+    auto hProfL  = new TProfile("hProfL",";Fiber number;QDC [a.u.]",4,3.5,7.5,0,3000); //nbins,xlow,xup,ylow,yup
+	auto hProfR  = new TProfile("hProfR",";Fiber number;QDC [a.u.]",4,3.5,7.5,0,3000); //nbins,xlow,xup,ylow,yup
+    auto hProfNormL = new TProfile("hProfNormL",";Fiber number;QDC/QDC_E [a.u.]",4,3.5,7.5,0,3000);
+    auto hProfNormR = new TProfile("hProfNormR",";Fiber number;QDC/QDC_E [a.u.]",4,3.5,7.5,0,3000);
     Int_t mod, lay, fi, side;
     
     for(int i = 0; i< N_FIBERS_IN_EVENT_LAYER; i++){
             std::string hnameQOnlyL = std::string("OnlyQcontrol_c") + std::to_string(i) + std::string("_L");
             std::string hnameQOnlyR = std::string("OnlyQcontrol_c") + std::to_string(i) + std::string("_R");
-            hOnlyQcontolL[i] = new TH1D(hnameQOnlyL.c_str(), hnameQOnlyL.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
-            hOnlyQcontolR[i] = new TH1D(hnameQOnlyR.c_str(), hnameQOnlyR.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
+            hOnlyQcontrolL[i] = new TH1D(hnameQOnlyL.c_str(), hnameQOnlyL.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
+            hOnlyQcontrolR[i] = new TH1D(hnameQOnlyR.c_str(), hnameQOnlyR.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
 
         for(int j = 0; j< N_FIBERS_IN_CONTROL_LAYER; j++){
             std::string hnameTL = std::string("TeventTcontrol_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_L");
             std::string hnameTR = std::string("TeventTcontrol_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_R");
             std::string hnameQL = std::string("QeventQcontrol_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_L");
             std::string hnameQR = std::string("QeventQcontrol_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_R");
+            std::string hnameQL2D = std::string("QeventQcontrol2D_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_L");
+            std::string hnameQR2D = std::string("QeventQcontrol2D_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_R");
             std::string hnameQDepL = std::string("HighDepQeventQcontrol_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_L");
             std::string hnameQDepR = std::string("HighDepQeventQcontrol_e") + std::to_string(i) + std::string("_c") + std::to_string(j) + std::string("_R");
             
-            hTeventTcontolL[i][j] = new TH1D(hnameTL.c_str(), hnameTL.c_str(), NBINS_T0DIFF, XLOW_T0DIFF, XUP_T0DIFF);
-            hTeventTcontolR[i][j] = new TH1D(hnameTR.c_str(), hnameTR.c_str(), NBINS_T0DIFF, XLOW_T0DIFF, XUP_T0DIFF);
-            hQeventQcontolL[i][j] = new TH1D(hnameQL.c_str(), hnameQL.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
-            hQeventQcontolR[i][j] = new TH1D(hnameQR.c_str(), hnameQR.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
+            hTeventTcontrolL[i][j] = new TH1D(hnameTL.c_str(), hnameTL.c_str(), NBINS_T0DIFF, XLOW_T0DIFF, XUP_T0DIFF);
+            hTeventTcontrolR[i][j] = new TH1D(hnameTR.c_str(), hnameTR.c_str(), NBINS_T0DIFF, XLOW_T0DIFF, XUP_T0DIFF);
+            hQeventQcontrolL[i][j] = new TH1D(hnameQL.c_str(), hnameQL.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
+            hQeventQcontrolR[i][j] = new TH1D(hnameQR.c_str(), hnameQR.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
+            h2QeventQcontrolL[i][j] = new TH2D(hnameQL2D.c_str(), hnameQL2D.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC, NBINS_QDC, XLOW_QDC, XUP_QDC);
+            h2QeventQcontrolR[i][j] = new TH2D(hnameQR2D.c_str(), hnameQR2D.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC, NBINS_QDC, XLOW_QDC, XUP_QDC);
             hQDCHighDepL[i][j] = new TH1D(hnameQDepL.c_str(), hnameQDepL.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
             hQDCHighDepR[i][j] = new TH1D(hnameQDepR.c_str(), hnameQDepR.c_str(), NBINS_QDC, XLOW_QDC, XUP_QDC);
 
@@ -379,34 +421,41 @@ int rawDisplayCrossedFibers(TString path)
     for(int i = 4; i<N_CROSSED_FIBERS; i++){
         for(int j = 0; j<vTimeL[0].size(); j++){
             if(vQDCL[0][j] == -100  && vQDCR[0][j] == -100 && vQDCL[1][j] == -100  && vQDCR[1][j] == -100 && vQDCL[2][j] == -100  && vQDCR[2][j] == -100 && vQDCL[3][j] == -100  && vQDCR[3][j] == -100 && vQDCL[i][j] != -100  && vQDCR[i][j]!=-100){
-                    hOnlyQcontolL[i-4]->Fill(vQDCL[i][j]);
-                    hOnlyQcontolR[i-4]->Fill(vQDCR[i][j]);
+                    hOnlyQcontrolL[i-4]->Fill(vQDCL[i][j]);
+                    hOnlyQcontrolR[i-4]->Fill(vQDCR[i][j]);
                 //std::cout << vQDCL[4][j] << " " << vQDCL[5][j] << " "<< vQDCL[6][j] << " "<< vQDCL[7][j] << " " << std::endl;    
 //                 if(vQDCL[4][j] == -100  && vQDCR[4][j] == -100 && vQDCL[5][j] == -100  && vQDCR[5][j] == -100 && vQDCL[6][j] == -100  && vQDCR[6][j] == -100 && vQDCL[7][j] == -100  && vQDCR[7][j] == -100 && vQDCL[i-4][j] != -100  && vQDCR[i-4][j]!=-100){
-//                 hOnlyQcontolL[i-4]->Fill(vQDCL[i-4][j]);
-//                 hOnlyQcontolR[i-4]->Fill(vQDCR[i-4][j]);
+//                 hOnlyQcontrolL[i-4]->Fill(vQDCL[i-4][j]);
+//                 hOnlyQcontrolR[i-4]->Fill(vQDCR[i-4][j]);
             }
             for(int k=0; k<4; k++){
                 if(vTimeL[k][j] != -100  && vTimeL[i][j] != -100)
-                    hTeventTcontolL[k][i-4]->Fill(vTimeL[k][j]-vTimeL[i][j]);
+                    hTeventTcontrolL[k][i-4]->Fill(vTimeL[k][j]-vTimeL[i][j]);
                 if(vTimeR[k][j] != -100 && vTimeR[i][j] != -100)
-                    hTeventTcontolR[k][i-4]->Fill(vTimeR[k][j]-vTimeR[i][j]);
+                    hTeventTcontrolR[k][i-4]->Fill(vTimeR[k][j]-vTimeR[i][j]);
                 
-                if(fabs(vTimeL[k][j]-vTimeL[i][j]) < cutT0diff && vQDCL[i][j] !=-100)
-                    hQeventQcontolL[k][i-4]->Fill(vQDCL[i][j]);
-                if(fabs(vTimeR[k][j]-vTimeR[i][j])<cutT0diff && vQDCR[i][j] !=-100)
-                    hQeventQcontolR[k][i-4]->Fill(vQDCR[i][j]);
-                
-                if(fabs(vTimeL[k][j]-vTimeL[i][j]) < cutT0diff && vQDCL[i][j] !=-100 && vQDCL[k][j]>HIGH_QDC_DEPOSITE)
+                if(fabs(vTimeL[k][j]-vTimeL[i][j]) < cutT0diff && vQDCL[i][j] !=-100){
+                    hQeventQcontrolL[k][i-4]->Fill(vQDCL[i][j]);
+                    h2QeventQcontrolL[k][i-4]->Fill(vQDCL[k][j], vQDCL[i][j]); //event, control
+                }
+                if(fabs(vTimeR[k][j]-vTimeR[i][j])<cutT0diff && vQDCR[i][j] !=-100){
+                    hQeventQcontrolR[k][i-4]->Fill(vQDCR[i][j]);
+                    h2QeventQcontrolR[k][i-4]->Fill(vQDCR[k][j], vQDCR[i][j]); //event, control
+                }
+                if(fabs(vTimeL[k][j]-vTimeL[i][j]) < cutT0diff && vQDCL[i][j] !=-100 && vQDCL[k][j]>HIGH_QDC_DEPOSITE){
                     hQDCHighDepL[k][i-4]->Fill(vQDCL[i][j]);
                     hProfL->Fill(i,vQDCL[i][j]);
+                    hProfNormL->Fill(i,vQDCL[i][j]/vQDCL[k][j]);
                     //vQDCHighDepL.push_back(vQDCL[i][j]);
                     //vFibNHighDepL.push_back(i);
-                if(fabs(vTimeR[k][j]-vTimeR[i][j])<cutT0diff && vQDCR[i][j] !=-100 && vQDCR[k][j]>HIGH_QDC_DEPOSITE)
+                }
+                if(fabs(vTimeR[k][j]-vTimeR[i][j])<cutT0diff && vQDCR[i][j] !=-100 && vQDCR[k][j]>HIGH_QDC_DEPOSITE){
                     hQDCHighDepR[k][i-4]->Fill(vQDCR[i][j]);
                     hProfR->Fill(i,vQDCR[i][j]);
+                    hProfNormR->Fill(i,vQDCR[i][j]/vQDCR[k][j]);
 					//vQDCHighDepR.push_back(vQDCR[i][j]);
 					//vFibNHighDepR.push_back(i);
+                }
                 
 
             }
@@ -631,6 +680,14 @@ int rawDisplayCrossedFibers(TString path)
     canQDCcutR->SetLeftMargin(0.2);
     canQDCcutR->DivideSquare(16);
     
+    TCanvas * canQeQc2DL = new TCanvas("QeQc2DL", "QeQc2DL", XCANVAS, YCANVAS); 
+    canQeQc2DL->SetLeftMargin(0.2);
+    canQeQc2DL->DivideSquare(16);
+    
+    TCanvas * canQeQc2DR = new TCanvas("QeQc2DR", "QeQc2DR", XCANVAS, YCANVAS); 
+    canQeQc2DR->SetLeftMargin(0.2);
+    canQeQc2DR->DivideSquare(16);
+    
     TCanvas * canQDCControlOnlyL = new TCanvas("QDCControlOnlyL", "QDCControlOnlyL", XCANVAS, YCANVAS); 
     canQDCControlOnlyL->SetLeftMargin(0.2);
     canQDCControlOnlyL->DivideSquare(4);
@@ -761,47 +818,61 @@ int rawDisplayCrossedFibers(TString path)
     {
             canQDCControlOnlyL->cd(k+1);  
             gPad->SetGrid(1, 1);
-            hOnlyQcontolL[k]->Draw();
-            format_h_1D(hOnlyQcontolL[k]);
-            hOnlyQcontolL[k]->GetXaxis()->SetTitle("QDC");
-            hOnlyQcontolL[k]->GetYaxis()->SetTitle("Counts");   
+            hOnlyQcontrolL[k]->Draw();
+            format_h_1D(hOnlyQcontrolL[k]);
+            hOnlyQcontrolL[k]->GetXaxis()->SetTitle("QDC");
+            hOnlyQcontrolL[k]->GetYaxis()->SetTitle("Counts");   
             
             canQDCControlOnlyR->cd(k+1);  
             gPad->SetGrid(1, 1);
-            hOnlyQcontolR[k]->Draw();
-            format_h_1D(hOnlyQcontolR[k]);
-            hOnlyQcontolR[k]->GetXaxis()->SetTitle("QDC");
-            hOnlyQcontolR[k]->GetYaxis()->SetTitle("Counts");
+            hOnlyQcontrolR[k]->Draw();
+            format_h_1D(hOnlyQcontrolR[k]);
+            hOnlyQcontrolR[k]->GetXaxis()->SetTitle("QDC");
+            hOnlyQcontrolR[k]->GetYaxis()->SetTitle("Counts");
 
         for(Int_t j = 0; j < N_FIBERS_IN_CONTROL_LAYER; j++)
         {
             canTimeDiffL->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
             gPad->SetGrid(1, 1);
-            hTeventTcontolL[k][j]->Draw();
-            format_h_1D(hTeventTcontolL[k][j]);
-            hTeventTcontolL[k][j]->GetXaxis()->SetTitle("Time diff [ns]");
-            hTeventTcontolL[k][j]->GetYaxis()->SetTitle("Counts");   
+            hTeventTcontrolL[k][j]->Draw();
+            format_h_1D(hTeventTcontrolL[k][j]);
+            hTeventTcontrolL[k][j]->GetXaxis()->SetTitle("Time diff [ns]");
+            hTeventTcontrolL[k][j]->GetYaxis()->SetTitle("Counts");   
             
             canTimeDiffR->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
             gPad->SetGrid(1, 1);
-            hTeventTcontolR[k][j]->Draw();
-            format_h_1D(hTeventTcontolR[k][j]);
-            hTeventTcontolR[k][j]->GetXaxis()->SetTitle("Time diff [ns]");
-            hTeventTcontolR[k][j]->GetYaxis()->SetTitle("Counts");   
+            hTeventTcontrolR[k][j]->Draw();
+            format_h_1D(hTeventTcontrolR[k][j]);
+            hTeventTcontrolR[k][j]->GetXaxis()->SetTitle("Time diff [ns]");
+            hTeventTcontrolR[k][j]->GetYaxis()->SetTitle("Counts");   
             
             canQDCcutL->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
             gPad->SetGrid(1, 1);
-            hQeventQcontolL[k][j]->Draw();
-            format_h_1D(hQeventQcontolL[k][j]);
-            hQeventQcontolL[k][j]->GetXaxis()->SetTitle("QDC");
-            hQeventQcontolL[k][j]->GetYaxis()->SetTitle("Counts");   
+            hQeventQcontrolL[k][j]->Draw();
+            format_h_1D(hQeventQcontrolL[k][j]);
+            hQeventQcontrolL[k][j]->GetXaxis()->SetTitle("QDC");
+            hQeventQcontrolL[k][j]->GetYaxis()->SetTitle("Counts");   
             
             canQDCcutR->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
             gPad->SetGrid(1, 1);
-            hQeventQcontolR[k][j]->Draw();
-            format_h_1D(hQeventQcontolR[k][j]);
-            hQeventQcontolR[k][j]->GetXaxis()->SetTitle("QDC");
-            hQeventQcontolR[k][j]->GetYaxis()->SetTitle("Counts");   
+            hQeventQcontrolR[k][j]->Draw();
+            format_h_1D(hQeventQcontrolR[k][j]);
+            hQeventQcontrolR[k][j]->GetXaxis()->SetTitle("QDC");
+            hQeventQcontrolR[k][j]->GetYaxis()->SetTitle("Counts");   
+            
+            canQeQc2DL->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
+            gPad->SetGrid(1, 1);
+            h2QeventQcontrolL[k][j]->Draw("COLZ");
+            format_h_1D(hQeventQcontrolL[k][j]);
+            h2QeventQcontrolL[k][j]->GetXaxis()->SetTitle("Event layer QDC");
+            h2QeventQcontrolL[k][j]->GetYaxis()->SetTitle("Control layer QDC");   
+            
+            canQeQc2DR->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
+            gPad->SetGrid(1, 1);
+            h2QeventQcontrolR[k][j]->Draw("COLZ");
+            format_h_1D(hQeventQcontrolL[k][j]);
+            h2QeventQcontrolR[k][j]->GetXaxis()->SetTitle("Event layer QDC");
+            h2QeventQcontrolR[k][j]->GetYaxis()->SetTitle("Control layer QDC");  
             
             canQDCHighDepL->cd(N_FIBERS_IN_CONTROL_LAYER*k+(j+1));  
             gPad->SetGrid(1, 1);
@@ -818,12 +889,6 @@ int rawDisplayCrossedFibers(TString path)
             hQDCHighDepR[k][j]->GetYaxis()->SetTitle("Counts");  
         }
     }
-//  canHits->cd();  
-//  gPad->SetGrid(1, 1);
-// 	hFiberHits->Draw("colz");
-//  format_h_1D(hFiberMult);
-// 	hFiberHits->GetXaxis()->SetTitle("Fiber number");
-// 	hFiberHits->GetYaxis()->SetTitle("Fiber number");
     
 	output->mkdir("Canvases");
 	output->cd("Canvases");
@@ -846,6 +911,8 @@ int rawDisplayCrossedFibers(TString path)
     canTimeDiffL->Write();
     canTimeDiffR->Write();
     canQDCcutL->Write();
+    canQeQc2DL->Write();
+    canQeQc2DR->Write();
     canQDCcutR->Write();
     canQDCHighDepL->Write();
     canQDCHighDepR->Write();
@@ -853,6 +920,7 @@ int rawDisplayCrossedFibers(TString path)
 //     output->Close();
     
     TString pdfname = ConstructPdfName(path);
+    TString filenameonly = ConstructFileNameOnly(path);
     canQDC->Print(Form("%s(",pdfname.Data()), "pdf");
     canADC->Print(pdfname, "pdf");
     canT0->Print(pdfname,"pdf");
@@ -872,31 +940,84 @@ int rawDisplayCrossedFibers(TString path)
     canTimeDiffR->Print(pdfname,"pdf");
     canQDCcutL->Print(pdfname,"pdf");
     canQDCcutR->Print(pdfname,"pdf");
+    canQeQc2DL->Print(pdfname,"pdf");
+    canQeQc2DR->Print(pdfname,"pdf");
     canQDCHighDepL->Print(pdfname,"pdf");
     canQDCHighDepR->Print(pdfname,"pdf");
 
+    
+    
+    
+    auto canProfile = new TCanvas("Profile","Profile",1000,500);
+    canProfile->SetLeftMargin(0.4);
+    canProfile->Divide(2);
+    canProfile->cd(1);
+        gPad->SetLeftMargin(0.15);
+
+    hProfL->Draw();
+    hProfL->SetLineWidth(4);
+    hProfL->SetLineColor(kRed);
+    hProfL->SetAxisRange(3,8,"X");
+    
+    std::cout << "hProfL # of entries: " << hProfL->GetBinEntries(0) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfL->GetBinEntries(1) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfL->GetBinEntries(2) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfL->GetBinEntries(3) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfL->GetBinEntries(4) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfL->GetBinEntries(5) << std::endl;    
+    
+    std::cout << "hProfL bin content: " << hProfL->GetBinContent(0) << std::endl;
+    std::cout << "hProfL bin content: " << hProfL->GetBinContent(1) << std::endl;
+    std::cout << "hProfL bin content: " << hProfL->GetBinContent(2) << std::endl;
+    std::cout << "hProfL bin content: " << hProfL->GetBinContent(3) << std::endl;
+    std::cout << "hProfL bin content: " << hProfL->GetBinContent(4) << std::endl;
+    std::cout << "hProfL bin content: " << hProfL->GetBinContent(5) << std::endl;
+    
+        std::cout << "hProfL # of entries: " << hProfR->GetBinEntries(0) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfR->GetBinEntries(1) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfR->GetBinEntries(2) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfR->GetBinEntries(3) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfR->GetBinEntries(4) << std::endl;
+    std::cout << "hProfL # of entries: " << hProfR->GetBinEntries(5) << std::endl;    
+    
+    std::cout << "hProfL bin content: " << hProfR->GetBinContent(0) << std::endl;
+    std::cout << "hProfL bin content: " << hProfR->GetBinContent(1) << std::endl;
+    std::cout << "hProfL bin content: " << hProfR->GetBinContent(2) << std::endl;
+    std::cout << "hProfL bin content: " << hProfR->GetBinContent(3) << std::endl;
+    std::cout << "hProfL bin content: " << hProfR->GetBinContent(4) << std::endl;
+    std::cout << "hProfL bin content: " << hProfR->GetBinContent(5) << std::endl;
+
+    canProfile->cd(2);
+        gPad->SetLeftMargin(0.15);
+
+    hProfR->Draw();
+    hProfR->SetLineWidth(4);
+    hProfR->SetLineColor(kRed);
+    hProfR->SetAxisRange(3,8,"X");
+
+    
+    auto canProfileNorm = new TCanvas("ProfileNorm","ProfileNorm",1000,500);
+    
+    canProfileNorm->SetLeftMargin(0.4);
+    canProfileNorm->Divide(2);
+    canProfileNorm->cd(1);
+    gPad->SetLeftMargin(0.15);
+    hProfNormL->Draw();
+    hProfNormL->SetLineWidth(4);
+    hProfNormL->SetLineColor(kRed);
+    hProfNormL->SetAxisRange(3,8,"X");
+    
+    canProfileNorm->cd(2);
+    gPad->SetLeftMargin(0.15);
+    hProfNormR->Draw();
+    hProfNormR->SetLineWidth(4);
+    hProfNormR->SetLineColor(kRed);
+    hProfNormR->SetAxisRange(3,8,"X");
+    
+    
+   // canProfile->SaveAs("/scratch/gccb/data/202111/pdf/profile_2021_11_28_05_42_50cm.pdf");
+    canProfile->Print(pdfname,"pdf");
+    canProfileNorm->Print(pdfname,"pdf");
     canMult->Print(Form("%s)",pdfname.Data()),"pdf");
-    
-    
-   auto canProfile = new TCanvas("Profile","Profile",1000,500);
-   canProfile->Divide(2);
-   canProfile->cd(1);
-   hProfL->Draw();
-   hProfL->SetMarkerSize(2);
-   canProfile->cd(2);
-   hProfR->Draw();
-   hProfR->SetMarkerSize(10);
-   //hProfR->GetXAxis()->SetRange(3,8);
-
-   //Float_t px, py, pz;
-//   for ( Int_t i=0; i<25000; i++) {
-//     gRandom->Rannor(px,py);
-//     pz = px*px + py*py;
-     //~ hprof->Fill(px,pz);
-//   }
-   //~ hprof->Draw();
-
-    
-    
 	return 0;
 }
