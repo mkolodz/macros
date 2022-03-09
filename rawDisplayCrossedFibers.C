@@ -39,7 +39,7 @@
 #define XLOW_ADC 0
 #define XUP_ADC 100
 
-#define NBINS_QDC 50
+#define NBINS_QDC 100
 #define XLOW_QDC 0
 #define XUP_QDC 3000
 
@@ -305,7 +305,11 @@ int rawDisplayCrossedFibers(TString path)
 	SDDSignal  * sigR;
 	UShort_t mult = 0;
     Int_t binCount = 0;
+    Int_t rVetoCounter = 0;
  	int nLoop = loop->getEntries();
+    
+    char * outfilename="controllayer_50mm.txt";
+    std::ofstream outfile(outfilename);
 
 	for (int i = 0; i < nLoop; ++i) 
 	{
@@ -330,20 +334,20 @@ int rawDisplayCrossedFibers(TString path)
             if(pRaw->getQDCL() > QDC_MIN &&
                sigL->GetAmplitude() < ADC_MAX &&
                sigL->GetTOT() > TOT_MIN &&
-               pRaw->getTimeL() > T0_MIN &&
-               sigL->GetVeto() == 0)
+               pRaw->getTimeL() > T0_MIN /*&&
+               sigL->GetVeto() == 0*/)
             {
                 aSiPMHit[fi] = 1;
             }
             if(pRaw->getQDCR() > QDC_MIN &&
                sigR->GetAmplitude() < ADC_MAX &&
                sigR->GetTOT() > TOT_MIN &&
-               pRaw->getTimeR() > T0_MIN &&
-               sigR->GetVeto() == 0)
+               pRaw->getTimeR() > T0_MIN /*&&
+               sigR->GetVeto() == 0*/)
             {
                 aSiPMHit[fi+8] = 1;
             }
-
+            if(sigR->GetVeto() == 0) rVetoCounter++;
 			if(pRaw->getQDCL() > QDC_MIN &&
                pRaw->getQDCR() > QDC_MIN &&
                sigL->GetAmplitude() < ADC_MAX &&
@@ -352,9 +356,9 @@ int rawDisplayCrossedFibers(TString path)
                sigR->GetTOT() > TOT_MIN &&
                pRaw->getTimeL() > T0_MIN &&
                pRaw->getTimeR() > T0_MIN &&
-               fabs(pRaw->getTimeL() - pRaw->getTimeR()) < T0DIFF_MAX &&
+               fabs(pRaw->getTimeL() - pRaw->getTimeR()) < T0DIFF_MAX/* &&
                sigL->GetVeto() == 0 &&
-               sigR->GetVeto() == 0)
+               sigR->GetVeto() == 0*/)
             {
                 hA[mod][lay][fi][0]->Fill(sigL->GetAmplitude());
                 hA[mod][lay][fi][1]->Fill(sigR->GetAmplitude());
@@ -394,7 +398,6 @@ int rawDisplayCrossedFibers(TString path)
 				hTDif[mod][lay][fi]->Fill(pRaw->getTimeL() - pRaw->getTimeR() );
 			}
 		}
-// 		std::cout << "HERE: " << std::endl;
 // 		for (int p = 0; p<N_READ_OUT_SIPMS; p++){std::cout << aSiPMHit[p] << " " ;}
 		
 		for(int m=0;m<N_READ_OUT_SIPMS;m++){
@@ -423,11 +426,12 @@ int rawDisplayCrossedFibers(TString path)
             if(vQDCL[0][j] == -100  && vQDCR[0][j] == -100 && vQDCL[1][j] == -100  && vQDCR[1][j] == -100 && vQDCL[2][j] == -100  && vQDCR[2][j] == -100 && vQDCL[3][j] == -100  && vQDCR[3][j] == -100 && vQDCL[i][j] != -100  && vQDCR[i][j]!=-100){
                     hOnlyQcontrolL[i-4]->Fill(vQDCL[i][j]);
                     hOnlyQcontrolR[i-4]->Fill(vQDCR[i][j]);
-                //std::cout << vQDCL[4][j] << " " << vQDCL[5][j] << " "<< vQDCL[6][j] << " "<< vQDCL[7][j] << " " << std::endl;    
 //                 if(vQDCL[4][j] == -100  && vQDCR[4][j] == -100 && vQDCL[5][j] == -100  && vQDCR[5][j] == -100 && vQDCL[6][j] == -100  && vQDCR[6][j] == -100 && vQDCL[7][j] == -100  && vQDCR[7][j] == -100 && vQDCL[i-4][j] != -100  && vQDCR[i-4][j]!=-100){
 //                 hOnlyQcontrolL[i-4]->Fill(vQDCL[i-4][j]);
 //                 hOnlyQcontrolR[i-4]->Fill(vQDCR[i-4][j]);
             }
+            
+            
             for(int k=0; k<4; k++){
                 if(vTimeL[k][j] != -100  && vTimeL[i][j] != -100)
                     hTeventTcontrolL[k][i-4]->Fill(vTimeL[k][j]-vTimeL[i][j]);
@@ -443,7 +447,8 @@ int rawDisplayCrossedFibers(TString path)
                     h2QeventQcontrolR[k][i-4]->Fill(vQDCR[k][j], vQDCR[i][j]); //event, control
                 }
                 if(fabs(vTimeL[k][j]-vTimeL[i][j]) < cutT0diff && vQDCL[i][j] !=-100 && vQDCL[k][j]>HIGH_QDC_DEPOSITE){
-                    hQDCHighDepL[k][i-4]->Fill(vQDCL[i][j]);
+                    outfile << vQDCL[4][j] << " " << vQDCL[5][j] << " "<< vQDCL[6][j] << " "<< vQDCL[7][j] << " " << std::endl; 
+                    //hQDCHighDepL[k][i-4]->Fill(vQDCL[i][j]);
                     hProfL->Fill(i,vQDCL[i][j]);
                     hProfNormL->Fill(i,vQDCL[i][j]/vQDCL[k][j]);
                     //vQDCHighDepL.push_back(vQDCL[i][j]);
@@ -461,97 +466,11 @@ int rawDisplayCrossedFibers(TString path)
             }
         }
     }
-	//----- loose cuts
-/*
-    for (int i = 0; i < nLoop; ++i)
-	{
-		size_t nCat = pCatRaw->getEntries();
-        
-		for (uint j = 0; j < nCat; ++j)
-		{
-			samples = (SDDSamples*)pCatSample->getObject(j);
-			pRaw = (SFibersRaw *)pCatRaw->getObject(j);
-			sigL = (SDDSignal*)samples->getSignalL();
-			sigR = (SDDSignal*)samples->getSignalR();
-			pRaw->getAddress(mod, lay, fi);
-
-			if(pRaw->getQDCL() > QDC_MIN &&
-               sigL->GetAmplitude() < ADC_MAX &&
-               sigL->GetTOT() > TOT_MIN &&
-               pRaw->getTimeL() > T0_MIN &&
-               //fabs(pRaw->getTimeL() - pRaw->getTimeR()) < T0DIFF_MAX &&
-               sigL->GetVeto() == 0)
-            {
-                hA[mod][lay][fi][0]->Fill(sigL->GetAmplitude());
-                hQ[mod][lay][fi][0]->Fill(pRaw->getQDCL());
-                hT0[mod][lay][fi][0]->Fill(pRaw->getTimeL());
-                hTOT[mod][lay][fi][0]->Fill(sigL->GetTOT());
-            }
-                
-            if(pRaw->getQDCR() > QDC_MIN &&
-               sigR->GetAmplitude() < ADC_MAX && 
-               sigR->GetTOT() > TOT_MIN &&
-               pRaw->getTimeR() > T0_MIN &&
-               //fabs(pRaw->getTimeL() - pRaw->getTimeR()) < T0DIFF_MAX &&
-               sigR->GetVeto() == 0)
-            {
-                
-                hA[mod][lay][fi][1]->Fill(sigR->GetAmplitude());
-				hQ[mod][lay][fi][1]->Fill(pRaw->getQDCR());
-                hT0[mod][lay][fi][1]->Fill(pRaw->getTimeR());
-                hTOT[mod][lay][fi][1]->Fill(sigR->GetTOT());
-            }
-            
-            if(pRaw->getQDCL() > QDC_MIN &&
-               sigL->GetAmplitude() < ADC_MAX &&
-               sigL->GetTOT() > TOT_MIN &&
-               pRaw->getTimeL() > T0_MIN &&
-               sigL->GetVeto() == 0 &&
-               pRaw->getQDCR() > QDC_MIN &&
-               sigR->GetAmplitude() < ADC_MAX && 
-               sigR->GetTOT() > TOT_MIN &&
-               pRaw->getTimeR() > T0_MIN &&
-               sigR->GetVeto() == 0 &&
-               fabs(pRaw->getTimeL() - pRaw->getTimeR()) < T0DIFF_MAX)
-            {
-                
-                hQAve[mod][lay][fi]->Fill(sqrt(pRaw->getQDCL()*pRaw->getQDCR()));
-                hQSum[mod][lay][fi]->Fill(pRaw->getQDCL() + pRaw->getQDCR());
-                hMLR[mod][lay][fi]->Fill(log(sqrt(pRaw->getQDCR()/pRaw->getQDCL())));
-                
-                hQLvsQR[mod][lay][fi]->Fill(pRaw->getQDCL(), pRaw->getQDCR());
-                hQRvsAR[mod][lay][fi]->Fill(sigR->GetAmplitude(), pRaw->getQDCR());
-                hQLvsAL[mod][lay][fi]->Fill(sigL->GetAmplitude(), pRaw->getQDCL());
-                
-				if(abs(pRaw->getTimeL() - pRaw->getTimeR() ) < T0DIFF_MAX)
-                {
-					++mult;
-				}
-			}	
-
-			if(pRaw->getQDCL() > QDC_MIN &&
-               pRaw->getQDCR() > QDC_MIN &&
-               sigL->GetAmplitude() < ADC_MAX &&
-               sigR->GetAmplitude() < ADC_MAX &&
-               sigL->GetTOT() > TOT_MIN &&
-               sigR->GetTOT() > TOT_MIN &&
-               pRaw->getTimeL() > T0_MIN &&
-               pRaw->getTimeR() > T0_MIN &&
-               sigL->GetVeto() == 0 &&
-               sigR->GetVeto() == 0)
-            {
-				hTDif[mod][lay][fi]->Fill(pRaw->getTimeL() - pRaw->getTimeR() );
-			}
-		}
-		
-		hFiberMult->Fill(mult);
-
-		mult = 0;
-		loop->nextEvent();
-	}
-	*/
 
 	std::cout << "\n\nLoop entries: " << nLoop << std::endl;
+    
+    std::cout << "\n\nrVetoCounter: " << rVetoCounter << std::endl;
+
 /*    
     //char command_4[500] = "rm ";
     strcat(command_4, meas_path.c_str());
@@ -952,7 +871,7 @@ int rawDisplayCrossedFibers(TString path)
     canProfile->SetLeftMargin(0.4);
     canProfile->Divide(2);
     canProfile->cd(1);
-        gPad->SetLeftMargin(0.15);
+    gPad->SetLeftMargin(0.15);
 
     hProfL->Draw();
     hProfL->SetLineWidth(4);
