@@ -2,8 +2,6 @@
 #include "SLoop.h"
 #include "SDDSamples.h"
 #include "SFibersRaw.h"
-// #include "SiFiSeries.h"
-// #include "SiFiDatabase.h"
 #include "TH1D.h"
 #include "TTree.h"
 #include "TString.h"
@@ -22,54 +20,16 @@
 #include <ctime>
 #include <algorithm>
 
-// //----- prototype geometry
-// #define N_MODULES 2
-// #define N_LAYERS_PER_MODULE 30
-// #define N_FIBERS_PER_LAYER 76
-// #define N_SIDES 2
 
-//----- prototype geometry 4to1 (here fibers are actually SiPMs)
+//----- prototype geometry 4to1
 #define N_MODULES 1
-#define N_LAYERS_PER_MODULE 4
-#define N_FIBERS_PER_LAYER 28
+#define N_LAYERS_PER_MODULE 7
+#define N_FIBERS_PER_LAYER 55
 #define N_SIDES 2
-
-// //----- binning and histogram ranges
-// #define NBINS_ADC 200
-// #define XLOW_ADC 0
-// #define XUP_ADC 100
-// 
-// #define NBINS_QDC 250
-// #define XLOW_QDC 0
-// #define XUP_QDC 3000
-// 
-// #define NBINS_T 500
-// #define XLOW_T 0
-// #define XUP_T 500
-// 
-// #define NBINS_TDIFF 200
-// #define XLOW_TDIFF -50
-// #define XUP_TDIFF 50
-// 
-// #define NBINS_MLR 400
-// #define XLOW_MLR -5
-// #define XUP_MLR 5
-// 
-// //----- cuts
-// #define ADC_MAX 600
-// #define TDIFF_MAX 10
-// #define QDC_MIN 0
-// #define TOT_MIN 0
-// #define T_MIN 0
 
 //----- canvas size
 #define XCANVAS 1600
 #define YCANVAS 1000
-
-//----- binning and histogram ranges
-// #define NBINS_ADC 200
-// #define XLOW_ADC 0
-// #define XUP_ADC 1000
 
 // //TOFPET 
 #define NBINS_QDC 200
@@ -93,28 +53,6 @@
 #define QDC_MIN 0
 #define T_MIN 0
 
-//Citiroc
-// #define NBINS_QDC 500
-// #define XLOW_QDC 0
-// #define XUP_QDC 9000
-// 
-// #define NBINS_T 100
-// #define XLOW_T 0
-// #define XUP_T 5e10
-// 
-// #define NBINS_TDIFF 100
-// #define XLOW_TDIFF -50
-// #define XUP_TDIFF 50
-// 
-// #define NBINS_MLR 100
-// #define XLOW_MLR -15
-// #define XUP_MLR 15
-// 
-// //----- cuts
-// #define TDIFF_MAX 10
-// #define QDC_MIN 0
-// #define T_MIN 0
-
 
 /*! \file rawDisplayDynamicDAQ.C
 This macro reads a sifi_results.root file (which is an output file from the sifi-framework) and produces histograms for all active addresses (module, layer, fiber) of charge and time for left and right prototype sides, as well as summed charge, average charge, time difference, MLR, correlation plots: charge left vs. charge right and time left vs. time right and a fiber multiplicity histogram. The histograms are then saved in /path/to/data/folder/YYYY_MM_DD_HH_MM/sifi_results_HISTOS.root and in /path/to/data/folder/YYYY_MM_DD_HH_MM/../pdf/2022_04_13_13_55_sifi_results_HISTOS.pdf
@@ -133,11 +71,7 @@ void format_h_1D(TH1 * h)
 
 TString ConstructPdfName(TString pathname){
 
-//   TString out = pathname(0,28); // length of this path: /scratch1/gccb/data/Citiroc/ - 28 characters
-//   TString out = pathname(0,28); // length of this path: /scratch1/gccb/data/TOFPET2/ - 28 characters
-  TString out = pathname(0,36); // length of this path: /scratch1/gccb/data/TOFPET2/results/ - 36 characters
-//   TString out = pathname(0,27); // length of this path: /scratch1/gccb/data/202***/ - 27 characters
-  //TString out = pathname(0,26); // length of this path: /scratch/gccb/data/202***/ - 26 characters
+  TString out = pathname(0,42); // length of this path: /scratch1/gccb/data/Jan2023Beam/results_1/ - 42 characters
   out.Append("pdf/");
   TObjArray* Strings = pathname.Tokenize("/");
   TIter iString(Strings);

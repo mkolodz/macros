@@ -1,0 +1,2 @@
+sifi_dst_4to1 0x1000::/scratch1/gccb/data/Jan2023Beam/root/preselectionTimes/run00569_single_nlc_spills.root -i 0 -e 1000000000 -p ~/project/sifi-framework/macros/params.txt -o /scratch1/gccb/data/Jan2023Beam/results/run00569_sifi_spills_eventtypeAonly.root
+sifi_dst_4to1 0x1000::/scratch1/gccb/data/Jan2023Beam/root/preselectionTimes/run00569_single_nlc_bg.root -i 0 -e 1000000000 -p ~/project/sifi-framework/macros/params.txt -o /scratch1/gccb/data/Jan2023Beam/results/run00569_sifi_bg_eventtypeAonly.root
