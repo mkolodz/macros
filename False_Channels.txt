@@ -1,0 +1,1 @@
+/home/magda/project/HIT_beamtime/GabrielsFilter/serialProcessing/False_Channels.txt
