@@ -13,13 +13,12 @@
 
 //how to  run: 
 //root -l
-//.x rawDisplayFiberClusters_HitMapsOnly.C({"/path/to/sifi_tree1.root","/path/to/sifi_tree2.root"})
+//.x rawDisplayFiberClusters_HitMapsOnly.C("/path/to/sifi_tree.root")
 
-int rawDisplayFiberClusters_HitMapsOnly(std::vector<TString> path)
+int rawDisplayFiberClusters_HitMapsOnly(TString path)
 {
     auto start = std::chrono::system_clock::now();  
-    int ii=0;
-    if(!path[ii].Contains("/") || !path[ii].BeginsWith("/"))
+    if(!path.Contains("/") || !path.BeginsWith("/"))
     {
         std::cout << "##### Error! The functions needs the filename including the full absolute path..." << std::endl;
         std::abort();
@@ -27,14 +26,14 @@ int rawDisplayFiberClusters_HitMapsOnly(std::vector<TString> path)
     
     gStyle->SetPalette(kBird);
     
-    std::vector<std::string> str_path;
-    for(int i=0; i < path.size(); i++){
-        str_path.push_back(std::string(path[i]));
-        printf("HERE: %s", str_path[i].c_str());
-    }
+//     std::vector<std::string> str_path;
+//     for(int i=0; i < path.size(); i++){
+//         str_path.push_back(std::string(path[i]));
+//         printf("HERE: %s", str_path[i].c_str());
+//     }
     
 	SLoop * loop = new SLoop();
-	loop->addFiles(str_path);
+	loop->addFile(std::string(path));
 	loop->setInput({});
 
     //if needed, change the category below to any other category valid in sifi-framework (and add appropriate header)
@@ -46,7 +45,7 @@ int rawDisplayFiberClusters_HitMapsOnly(std::vector<TString> path)
     
 	SFibersRawCluster * pRawClus;
  	int nLoop = loop->getEntries();
-   
+
 	for (int i = 0; i < nLoop; i++)
 	{
         loop->getEvent(i);
@@ -65,8 +64,8 @@ int rawDisplayFiberClusters_HitMapsOnly(std::vector<TString> path)
 	
 	std::cout << "\n\nLoop entries: " << nLoop << std::endl;
 
-	path[ii].ReplaceAll(".root", "_HITMAPS.root");
-	TFile *output = new TFile(path[ii],"RECREATE");
+	path.ReplaceAll(".root", "_HITMAPS.root");
+	TFile *output = new TFile(path,"RECREATE");
 	output->cd();
     hFiberHitMap->Write();
     
